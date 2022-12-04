@@ -1,4 +1,4 @@
-(ns aoc-2022.clj
+(ns aoc-2022.day3
   (:require [clojure.string :as str]
             [clojure.java.io :as io]))
 

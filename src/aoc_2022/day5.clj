@@ -15,7 +15,14 @@
        (apply map list)
        (mapv (fn [a] (filter #(not= "0" %) a))))))
 
-(defn parse-instructions [inst-str] inst-str)
+(defn parse-instructions [inst-str]
+  (->> inst-str
+       str/split-lines
+       (map #(str/split % #" "))
+       (map (fn [[_ n _ from _ to]]
+              {:n (Integer/parseInt n 10)
+               :from (Integer/parseInt from 10)
+               :to (Integer/parseInt to 10)}))))
 
 (defn parse-all [data-str]
   (-> data-str
@@ -24,22 +31,36 @@
          {:argmt (parse-arrangement argmt-str)
           :inst  (parse-instructions inst-str)}))))
 
-(defn move [stacks {:keys [from to n]}]
-  (let [crates (reverse (take-last n from))]
+(defn move-9000 [stacks {:keys [from to n]}]
+  (let [from-index (dec from)
+        to-index (dec to)
+        crates (reverse (take-last n (nth stacks from-index)))]
     (-> stacks
-        (update from #(drop n))
-        (update to #(conj % crates)))))
+        (update from-index #(drop-last n %))
+        (update to-index #(concat % crates)))))
 
-(comment
-  (parse-arrangement "[Z] [M] [B]\n1 2 3")
-  (partition 4 "[N] [C] ")
-  (str/split "[N] [C] " #" ")
+(defn move-9001 [stacks {:keys [from to n]}]
+  (let [from-index (dec from)
+        to-index   (dec to)
+        crates     (take-last n (nth stacks from-index))]
+    (-> stacks
+        (update from-index #(drop-last n %))
+        (update to-index #(concat % crates)))))
 
-  (update [[1] [2] [3]] 0 #(concat % [2]))
+(defn move-crates [move-fn]
+  (let [parsed (-> "day5.txt"
+                   io/resource
+                   slurp
+                   parse-all)]
+    (loop [stacks (:argmt parsed)
+           moves  (:inst parsed)]
+      (if-not (seq moves)
+        stacks
+        (recur (move-fn stacks (first moves)) (rest moves))))))
+
+(defn solve1 []
+  (str/join (map last (move-crates move-9000))))
 
 
-  (-> "day5_ex.txt"
-      io/resource
-      slurp
-      parse-all)
-  ,)
+(defn solve2 []
+  (str/join (map last (move-crates move-9001))))

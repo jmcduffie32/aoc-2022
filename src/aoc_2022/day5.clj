@@ -24,10 +24,18 @@
          {:argmt (parse-arrangement argmt-str)
           :inst  (parse-instructions inst-str)}))))
 
+(defn move [stacks {:keys [from to n]}]
+  (let [crates (reverse (take-last n from))]
+    (-> stacks
+        (update from #(drop n))
+        (update to #(conj % crates)))))
+
 (comment
   (parse-arrangement "[Z] [M] [B]\n1 2 3")
   (partition 4 "[N] [C] ")
   (str/split "[N] [C] " #" ")
+
+  (update [[1] [2] [3]] 0 #(concat % [2]))
 
 
   (-> "day5_ex.txt"

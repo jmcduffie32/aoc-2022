@@ -9,10 +9,11 @@
       reverse
       (->>
        (drop 1)
+       (map #(str/replace % #"    " "[0] "))
        (map #(mapcat (partial drop 1)
-                     (re-seq #"\[([A-Z])\]" %)))
-       ;; (drop 1)
-       )))
+                     (re-seq #"\[([0A-Z])\]" %)))
+       (apply map list)
+       (mapv (fn [a] (filter #(not= "0" %) a))))))
 
 (defn parse-instructions [inst-str] inst-str)
 
@@ -25,8 +26,9 @@
 
 (comment
   (parse-arrangement "[Z] [M] [B]\n1 2 3")
-  (re-matches #"\[([A-Z])\]" "[Z] [M] [B]")
-  (re-matches #"Z" "[Z] [M] [B]")
+  (partition 4 "[N] [C] ")
+  (str/split "[N] [C] " #" ")
+
 
   (-> "day5_ex.txt"
       io/resource

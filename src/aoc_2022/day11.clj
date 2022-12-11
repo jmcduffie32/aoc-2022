@@ -51,7 +51,7 @@ Monkey 3:
      :t (Integer/parseInt (re-find #"\d+" true-str) 10)
      :f (Integer/parseInt (re-find #"\d+" false-str) 10)}))
 
-(defn target-monkey [item {:keys [op div t f]}]
+(defn target-monkey [item {:keys [op div t f]} mod]
   (let [[op m] op
         modifier (bigint (if (= m "old") item (Integer/parseInt m 10)))
         v (case op
@@ -60,37 +60,49 @@ Monkey 3:
             "-" (- item modifier)
             "/" (/ item modifier))
         stress-mod v];;(quot v 3)
-    [(if (zero? (rem stress-mod div)) t f) stress-mod]))
+    [(if (zero? (rem stress-mod div)) t f) (rem stress-mod mod)]))
 
-(defn throw-items [initial-monkey initial-monkeys]
+(defn throw-items [initial-monkey initial-monkeys mod]
   (loop [i 0
          {items :items :as monkey} initial-monkey
          monkeys initial-monkeys]
-    (println "throw-item:" items)
     (if (empty? items)
       monkeys
       (let [[item] items
-            [target new-item] (target-monkey item monkey)]
+            [target new-item] (target-monkey item monkey mod)]
         (recur
          (inc i)
          (update monkey :items (partial drop 1))
          (->> (update-in monkeys [target :items] conj new-item)))))))
 
-(defn run-round [initial-monkeys]
+(defn run-round [mod initial-monkeys]
   (loop [i 0
          monkeys initial-monkeys] ;; heh, monkey tail
-    (println "run-round:" i)
     (if (= i (count monkeys))
       monkeys
       (recur (inc i)
-             (-> (throw-items (get monkeys i) monkeys)
+             (-> (throw-items (get monkeys i) monkeys mod)
                  (update-in [i :n-inspected] (fnil (partial + (count (get-in monkeys [i :items]))) 0))
                  (assoc-in [i :items] []))))))
 
 (comment
-  (->> (str/split (slurp (io/resource "day11.txt")) #"\n\n")
-       (mapv parse-monkey)
-       (iterate run-round)
-       (drop 1)
-       (take 10000))
+
+  (def monkeys (->> (str/split (slurp (io/resource "day11.txt"))
+                               #"\n\n")
+                    (mapv parse-monkey)))
+  monkeys
+
+  (def mod (apply * (map :div monkeys)))
+
+  (def answer
+    (->> monkeys
+         (iterate (partial run-round mod))
+         (drop 10000)
+         first
+         (mapv :n-inspected)
+         (sort >)
+         (take 2)
+         (apply *)))
+
+ 27267163742
   )
